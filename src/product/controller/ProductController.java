@@ -3,45 +3,55 @@ package product.controller;
 import product.ProductConstants;
 import product.dto.ProductInputDto;
 import product.entity.Product;
+import product.repository.ProductRepository;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class ProductController {
-    private final List<Product> pro = new ArrayList<>(ProductConstants.MAX_INVENTORY);
+    private final ProductRepository repository = new ProductRepository();
 
     public ProductController() {
-        pro.add(Product.builder().pName("갤럭시").price(1200000).brand("삼성").build());
-        pro.add(Product.builder().pName("아이폰").price(1300000).brand("애플").build());
-        pro.add(Product.builder().pName("아이패드").price(800000).brand("애플").build());
+        // 샘플 데이터 초기화 (Lombok 빌더 활용)
+        repository.save(Product.builder().category("GENERAL").kind("가전").name("갤럭시").detail("삼성").numOf(1).price(1200000).build());
+        repository.save(Product.builder().category("GENERAL").kind("가전").name("아이폰").detail("애플").numOf(1).price(1300000).build());
+        repository.save(Product.builder().category("SNACK").kind("빵").name("케이크").detail("블루베리").numOf(1).price(15000).build());
     }
 
     public void insertProduct(ProductInputDto dto) {
-        if (pro.size() >= ProductConstants.MAX_INVENTORY) {
+        if (repository.findAll().size() >= ProductConstants.MAX_INVENTORY) {
             throw new IllegalStateException(ProductConstants.MSG_FULL_INVENTORY);
         }
 
-        pro.add(Product.builder()
-                .pName(dto.pName())
+        Product product = Product.builder()
+                .category(dto.category())
+                .kind(dto.kind())
+                .name(dto.name())
+                .detail(dto.detail())
+                .numOf(dto.numOf())
                 .price(dto.price())
-                .brand(dto.brand())
-                .build());
+                .build();
+        repository.save(product);
     }
 
     public List<Product> selectProduct() {
-        return Collections.unmodifiableList(pro);
+        return repository.findAll();
     }
 
-    public List<Product> selectProductByBrand(String brand) {
-        return pro.stream()
-                .filter(p -> p.getBrand().equalsIgnoreCase(brand.trim()))
-                .toList();
+    public void updateProduct(Long id, ProductInputDto dto) {
+        Product product = repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException(ProductConstants.MSG_NOT_FOUND));
+
+        product.setKind(dto.kind());
+        product.setName(dto.name());
+        product.setDetail(dto.detail());
+        product.setNumOf(dto.numOf());
+        product.setPrice(dto.price());
+        repository.save(product);
     }
 
-    public List<Product> selectProductByPriceLessThanOrEqual(int price) {
-        return pro.stream()
-                .filter(p -> p.getPrice() <= price)
-                .toList();
+    public void deleteProduct(Long id) {
+        repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException(ProductConstants.MSG_NOT_FOUND));
+        repository.delete(id);
     }
 }

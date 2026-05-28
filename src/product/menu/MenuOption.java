@@ -11,9 +11,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public enum MenuOption {
-    INSERT(1, "상품 추가", ProductMenu::handleInsertProduct),
-    SELECT(2, "상품 전체 조회", ProductMenu::handleSelectAllProducts),
-    EXIT(9, "프로그램 종료", ProductMenu::handleExit);
+    CREATE(1, "상품/스낵 등록", ProductMenu::handleCreate),
+    READ(2, "상품/스낵 전체 조회", ProductMenu::handleRead),
+    UPDATE(3, "상품/스낵 정보 수정", ProductMenu::handleUpdate),
+    DELETE(4, "상품/스낵 정보 삭제", ProductMenu::handleDelete),
+    EXIT(9, "메인으로", ProductMenu::handleExit);
 
     @Getter
     private final int code;

@@ -1,6 +1,5 @@
 import product.menu.ProductMenu;
 import student.menu.StudentMenu;
-import snack.menu.SnackMenu;
 import shape.menu.ShapeMenu;
 
 import java.util.Arrays;
@@ -10,16 +9,12 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public enum SystemOption {
-    PRODUCT(1, "상품 재고 관리 시스템", () -> {
+    PRODUCT(1, "상품/스낵 관리 시스템", () -> {
         ProductMenu productMenu = new ProductMenu();
         productMenu.mainMenu();
     }),
     STUDENT(2, "학생 성적 관리 시스템", StudentMenu::new),
-    SNACK(3, "스낵 관리 시스템", () -> {
-        SnackMenu snackMenu = new SnackMenu();
-        snackMenu.menu();
-    }),
-    SHAPE(4, "도형 구현 시스템", () -> {
+    SHAPE(3, "도형 정보 확인 시스템", () -> {
         ShapeMenu shapeMenu = new ShapeMenu();
         shapeMenu.inputMenu();
     }),

@@ -12,14 +12,13 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class Shape {
-    private int type;
-    private double height;
-    private double width;
+    private int numSides;
+    private double sideLength;
 
     @Builder.Default
     private String color = "white";
 
     public String information() {
-        return height + " " + width + " " + color;
+        return numSides + " " + sideLength + " " + color;
     }
 }

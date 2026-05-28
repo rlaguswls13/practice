@@ -4,11 +4,6 @@ import product.ProductConstants;
 import product.controller.ProductController;
 import product.dto.ProductInputDto;
 import product.entity.Product;
-import product.prompt.Prompt;
-import product.prompt.MainPrompt;
-import product.prompt.InsertPrompt;
-import product.prompt.SelectPrompt;
-import product.type.SelectConditionType;
 
 import java.util.List;
 import java.util.Scanner;
@@ -19,21 +14,13 @@ public class ProductMenu {
     private boolean isRunning = true;
 
     public void mainMenu() {
-        this.isRunning = true; // 대시보드에서 매번 다시 진입할 때를 대비
+        this.isRunning = true;
         while (isRunning) {
             MenuOption.displayMenu();
-            printMenuPrompt();
+            System.out.print(ProductConstants.PROMPT_MENU_CHOICE);
             int choice = readIntegerInput();
             processCommand(choice);
         }
-    }
-
-    private void printMenuPrompt() {
-        System.out.print(MainPrompt.MENU_NUM.getText());
-    }
-
-    private void printPrompt(Prompt prompt) {
-        System.out.print(prompt.getText());
     }
 
     private int readIntegerInput() {
@@ -47,6 +34,35 @@ public class ProductMenu {
         }
     }
 
+    private Long readLongInput() {
+        try {
+            Long value = scanner.nextLong();
+            scanner.nextLine(); // 버퍼 비우기
+            return value;
+        } catch (Exception e) {
+            scanner.nextLine(); // 버퍼 비우기
+            return -1L;
+        }
+    }
+
+    private int readValidNumber(String prompt, String errorMsg) {
+        while (true) {
+            System.out.print(prompt);
+            try {
+                int value = scanner.nextInt();
+                scanner.nextLine(); // 버퍼 비우기
+                if (value < 0) {
+                    System.out.println(errorMsg);
+                    continue;
+                }
+                return value;
+            } catch (Exception e) {
+                System.out.println(errorMsg);
+                scanner.nextLine(); // 버퍼 비우기
+            }
+        }
+    }
+
     private void processCommand(int choice) {
         MenuOption.fromCode(choice).ifPresentOrElse(
                 option -> option.execute(this),
@@ -54,98 +70,98 @@ public class ProductMenu {
         );
     }
 
-    public void handleInsertProduct() {
-        try {
-            executeInsertStage();
-        } catch (IllegalStateException e) {
-            System.out.println(e.getMessage());
-        }
-        System.out.println();
-    }
-
-    private void executeInsertStage() {
-        printPrompt(InsertPrompt.PRODUCT_NAME);
-        String name = scanner.nextLine();
-
-        int price = readValidPrice();
-
-        printPrompt(InsertPrompt.PRODUCT_BRAND);
-        String brand = scanner.nextLine();
-
-        ProductInputDto dto = new ProductInputDto(name, price, brand);
-        controller.insertProduct(dto);
-    }
-
-    private int readValidPrice() {
+    public void handleCreate() {
         while (true) {
-            printPrompt(InsertPrompt.PRODUCT_PRICE);
-            try {
-                int price = scanner.nextInt();
-                scanner.nextLine(); // 버퍼 비우기
-                if (price < 0) {
-                    System.out.println(ProductConstants.MSG_INVALID_PRICE);
-                    continue;
-                }
-                return price;
-            } catch (Exception e) {
-                System.out.println(ProductConstants.MSG_INVALID_PRICE);
-                scanner.nextLine(); // 버퍼 비우기
-            }
-        }
-    }
+            System.out.println(ProductConstants.MSG_REGISTRATION_INTRO);
+            System.out.print(ProductConstants.PROMPT_REG_TYPE);
+            int regChoice = readIntegerInput();
+            System.out.println();
 
-    public void handleSelectAllProducts() {
-        SelectConditionType.displayMenu();
-        printPrompt(MainPrompt.SELECT_TYPE_NUM);
-        int choice = readIntegerInput();
-
-        SelectConditionType.fromCode(choice).ifPresentOrElse(
-                type -> type.execute(this),
-                () -> System.out.println(ProductConstants.MSG_INVALID_INPUT)
-        );
-        System.out.println();
-    }
-
-    public void handleSelectAll() {
-        List<Product> products = controller.selectProduct();
-        displayProducts(products);
-    }
-
-    public void handleSelectByBrand() {
-        printPrompt(SelectPrompt.SEARCH_BRAND);
-        String brand = scanner.nextLine();
-        List<Product> products = controller.selectProductByBrand(brand);
-        displayProducts(products);
-    }
-
-    public void handleSelectByPrice() {
-        while (true) {
-            printPrompt(SelectPrompt.SEARCH_PRICE);
-            try {
-                int price = scanner.nextInt();
-                scanner.nextLine(); // 버퍼 비우기
-                if (price < 0) {
-                    System.out.println(ProductConstants.MSG_INVALID_PRICE);
-                    continue;
-                }
-                List<Product> products = controller.selectProductByPriceLessThanOrEqual(price);
-                displayProducts(products);
+            if (regChoice == 9) {
                 break;
-            } catch (Exception e) {
-                System.out.println(ProductConstants.MSG_INVALID_PRICE);
-                scanner.nextLine(); // 버퍼 비우기
+            }
+
+            String category;
+            if (regChoice == 1) {
+                category = "GENERAL";
+            } else if (regChoice == 2) {
+                category = "SNACK";
+            } else {
+                System.out.println(ProductConstants.MSG_INVALID_INPUT);
+                continue;
+            }
+
+            try {
+                System.out.print(ProductConstants.PROMPT_KIND);
+                String kind = scanner.nextLine();
+
+                System.out.print(ProductConstants.PROMPT_NAME);
+                String name = scanner.nextLine();
+
+                System.out.print(ProductConstants.PROMPT_DETAIL);
+                String detail = scanner.nextLine();
+
+                int numOf = readValidNumber(ProductConstants.PROMPT_NUM_OF, ProductConstants.MSG_INVALID_NUM_OF);
+                int price = readValidNumber(ProductConstants.PROMPT_PRICE, ProductConstants.MSG_INVALID_PRICE);
+
+                ProductInputDto dto = new ProductInputDto(category, kind, name, detail, numOf, price);
+                controller.insertProduct(dto);
+                System.out.println(ProductConstants.MSG_REG_SUCCESS + "\n");
+                break;
+            } catch (IllegalStateException e) {
+                System.out.println(e.getMessage() + "\n");
+                break;
             }
         }
     }
 
-    private void displayProducts(List<Product> products) {
+    public void handleRead() {
+        List<Product> products = controller.selectProduct();
         if (products.isEmpty()) {
-            System.out.println("조회된 상품이 없습니다.");
+            System.out.println(ProductConstants.MSG_EMPTY_LIST + "\n");
             return;
         }
-        products.stream()
-                .map(Product::inform)
-                .forEach(System.out::println);
+        System.out.println("--- 등록된 상품/스낵 목록 ---");
+        products.forEach(p -> System.out.println(p.inform()));
+        System.out.println();
+    }
+
+    public void handleUpdate() {
+        System.out.print(ProductConstants.PROMPT_ID);
+        Long id = readLongInput();
+
+        try {
+            System.out.println(ProductConstants.MSG_UPDATE_INTRO);
+            System.out.print(ProductConstants.PROMPT_KIND);
+            String kind = scanner.nextLine();
+
+            System.out.print(ProductConstants.PROMPT_NAME);
+            String name = scanner.nextLine();
+
+            System.out.print(ProductConstants.PROMPT_DETAIL);
+            String detail = scanner.nextLine();
+
+            int numOf = readValidNumber(ProductConstants.PROMPT_NUM_OF, ProductConstants.MSG_INVALID_NUM_OF);
+            int price = readValidNumber(ProductConstants.PROMPT_PRICE, ProductConstants.MSG_INVALID_PRICE);
+
+            ProductInputDto dto = new ProductInputDto(null, kind, name, detail, numOf, price);
+            controller.updateProduct(id, dto);
+            System.out.println(ProductConstants.MSG_UPDATE_SUCCESS + "\n");
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage() + "\n");
+        }
+    }
+
+    public void handleDelete() {
+        System.out.print(ProductConstants.PROMPT_ID);
+        Long id = readLongInput();
+
+        try {
+            controller.deleteProduct(id);
+            System.out.println(ProductConstants.MSG_DELETE_SUCCESS + "\n");
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage() + "\n");
+        }
     }
 
     public void handleExit() {

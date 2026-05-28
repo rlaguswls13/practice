@@ -1,34 +1,66 @@
 package student.controller;
 
+import student.StudentConstants;
 import student.entity.Student;
+import student.repository.StudentRepository;
 
-import java.util.Arrays;
+import java.util.List;
 
 public class StudentController {
-    private final Student[] sArr = new Student[5];
-    public static final int CUT_LINE = 60;
+    private final StudentRepository repository = new StudentRepository();
 
     public StudentController() {
-        sArr[0] = Student.builder().name("김길동").subject("자바").score(100).build();
-        sArr[1] = Student.builder().name("박길동").subject("디비").score(50).build();
-        sArr[2] = Student.builder().name("이길동").subject("화면").score(85).build();
-        sArr[3] = Student.builder().name("정길동").subject("서버").score(60).build();
-        sArr[4] = Student.builder().name("홍길동").subject("자바").score(20).build();
+        // 샘플 데이터 초기화 (Lombok 빌더 활용)
+        repository.save(Student.builder().name("김길동").subject("자바").score(100).build());
+        repository.save(Student.builder().name("박길동").subject("디비").score(50).build());
+        repository.save(Student.builder().name("이길동").subject("화면").score(85).build());
+        repository.save(Student.builder().name("정길동").subject("서버").score(60).build());
+        repository.save(Student.builder().name("홍길동").subject("자바").score(20).build());
     }
 
-    public Student[] printStudent() {
-        return sArr.clone();
+    public void registerStudent(String name) {
+        Student student = Student.builder()
+                .name(name)
+                .subject("없음")
+                .score(-1)
+                .build();
+        repository.save(student);
     }
 
-    public int sumScore() {
-        return Arrays.stream(sArr)
-                .mapToInt(Student::getScore)
-                .sum();
+    public void registerScore(Long id, String subject, int score) {
+        Student student = repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException(StudentConstants.MSG_NOT_FOUND));
+
+        student.setSubject(subject);
+        student.setScore(score);
+        repository.save(student);
     }
 
-    public double[] avgScore() {
-        double sum = sumScore();
-        double avg = sum / sArr.length;
-        return new double[]{sum, avg};
+    public void deleteScore(Long id) {
+        Student student = repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException(StudentConstants.MSG_NOT_FOUND));
+
+        student.setSubject("없음");
+        student.setScore(-1);
+        repository.save(student);
+    }
+
+    public void deleteStudent(Long id) {
+        repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException(StudentConstants.MSG_NOT_FOUND));
+        repository.delete(id);
+    }
+
+    public List<Student> selectStudentAll() {
+        return repository.findAll();
+    }
+
+    public List<Student> selectStudentByName(String name) {
+        return repository.findByName(name);
+    }
+
+    public Student selectStudentById(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException(StudentConstants.MSG_NOT_FOUND));
     }
 }
