@@ -4,8 +4,11 @@ import product.ProductConstants;
 import product.controller.ProductController;
 import product.dto.ProductInputDto;
 import product.entity.Product;
+import product.type.ProductCategory;
+import product.type.ProductQueryOption;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Scanner;
 
 public class ProductMenu {
@@ -72,8 +75,8 @@ public class ProductMenu {
 
     public void handleCreate() {
         while (true) {
-            System.out.println(ProductConstants.MSG_REGISTRATION_INTRO);
-            System.out.print(ProductConstants.PROMPT_REG_TYPE);
+            ProductCategory.displayMenu();
+            System.out.print(ProductConstants.PROMPT_MENU_CHOICE);
             int regChoice = readIntegerInput();
             System.out.println();
 
@@ -81,15 +84,12 @@ public class ProductMenu {
                 break;
             }
 
-            String category;
-            if (regChoice == 1) {
-                category = "GENERAL";
-            } else if (regChoice == 2) {
-                category = "SNACK";
-            } else {
+            Optional<ProductCategory> categoryOpt = ProductCategory.fromCode(regChoice);
+            if (categoryOpt.isEmpty()) {
                 System.out.println(ProductConstants.MSG_INVALID_INPUT);
                 continue;
             }
+            ProductCategory category = categoryOpt.get();
 
             try {
                 System.out.print(ProductConstants.PROMPT_KIND);
@@ -98,7 +98,9 @@ public class ProductMenu {
                 System.out.print(ProductConstants.PROMPT_NAME);
                 String name = scanner.nextLine();
 
-                System.out.print(ProductConstants.PROMPT_DETAIL);
+                // 카테고리별 동적 상세 프롬프트 출력
+                String detailPrompt = getDetailPrompt(category);
+                System.out.print(detailPrompt);
                 String detail = scanner.nextLine();
 
                 int numOf = readValidNumber(ProductConstants.PROMPT_NUM_OF, ProductConstants.MSG_INVALID_NUM_OF);
@@ -116,19 +118,117 @@ public class ProductMenu {
     }
 
     public void handleRead() {
+        while (true) {
+            ProductQueryOption.displayMenu();
+            System.out.print(ProductConstants.PROMPT_MENU_CHOICE);
+            int searchChoice = readIntegerInput();
+            System.out.println();
+
+            if (searchChoice == 9) {
+                break;
+            }
+
+            Optional<ProductQueryOption> queryOpt = ProductQueryOption.fromCode(searchChoice);
+            if (queryOpt.isEmpty()) {
+                System.out.println(ProductConstants.MSG_INVALID_INPUT);
+                continue;
+            }
+
+            switch (queryOpt.get()) {
+                case ALL:
+                    queryAll();
+                    break;
+                case BY_ID:
+                    queryById();
+                    break;
+                case BY_CATEGORY:
+                    queryByCategory();
+                    break;
+                case BY_BRAND:
+                    queryByBrand();
+                    break;
+                case BY_PRICE:
+                    queryByPrice();
+                    break;
+                default:
+                    System.out.println(ProductConstants.MSG_INVALID_INPUT);
+            }
+        }
+    }
+
+    private void queryAll() {
         List<Product> products = controller.selectProduct();
-        if (products.isEmpty()) {
+        displayProductList("--- 등록된 상품/스낵 목록 ---", products);
+    }
+
+    private void queryById() {
+        System.out.print(ProductConstants.PROMPT_ID);
+        Long id = readLongInput();
+        controller.selectProductById(id).ifPresentOrElse(
+                p -> {
+                    System.out.println("--- 상품 상세 정보 ---");
+                    System.out.println(p.inform());
+                    System.out.println();
+                },
+                () -> System.out.println(ProductConstants.MSG_NOT_FOUND + "\n")
+        );
+    }
+
+    private void queryByCategory() {
+        System.out.print(ProductConstants.PROMPT_SEARCH_CATEGORY);
+        int categoryCode = readIntegerInput();
+        ProductCategory.fromCode(categoryCode).ifPresentOrElse(
+                category -> {
+                    List<Product> products = controller.selectProductByCategory(category);
+                    displayProductList("--- 카테고리 [" + category.getDescription() + "] 검색 결과 ---", products);
+                },
+                () -> System.out.println(ProductConstants.MSG_INVALID_INPUT)
+        );
+    }
+
+    private void queryByBrand() {
+        System.out.print(ProductConstants.PROMPT_SEARCH_BRAND);
+        String keyword = scanner.nextLine();
+        List<Product> products = controller.selectProductByBrand(keyword);
+        displayProductList("--- 브랜드/맛/품종 [" + keyword + "] 검색 결과 ---", products);
+    }
+
+    private void queryByPrice() {
+        int maxPrice = readValidNumber(ProductConstants.PROMPT_SEARCH_PRICE, ProductConstants.MSG_INVALID_PRICE);
+        List<Product> products = controller.selectProductByPriceLessThanOrEqual(maxPrice);
+        displayProductList("--- 가격 [" + maxPrice + "원 이하] 검색 결과 ---", products);
+    }
+
+    private void displayProductList(String title, List<Product> list) {
+        if (list.isEmpty()) {
             System.out.println(ProductConstants.MSG_EMPTY_LIST + "\n");
             return;
         }
-        System.out.println("--- 등록된 상품/스낵 목록 ---");
-        products.forEach(p -> System.out.println(p.inform()));
+        System.out.println(title);
+        list.forEach(p -> System.out.println(p.inform()));
         System.out.println();
+    }
+
+    private String getDetailPrompt(ProductCategory category) {
+        if (category == ProductCategory.GENERAL) {
+            return ProductConstants.PROMPT_DETAIL_GENERAL;
+        } else if (category == ProductCategory.SNACK) {
+            return ProductConstants.PROMPT_DETAIL_SNACK;
+        } else {
+            return ProductConstants.PROMPT_DETAIL_FRUIT;
+        }
     }
 
     public void handleUpdate() {
         System.out.print(ProductConstants.PROMPT_ID);
         Long id = readLongInput();
+
+        Optional<Product> originalOpt = controller.selectProductById(id);
+        if (originalOpt.isEmpty()) {
+            System.out.println(ProductConstants.MSG_NOT_FOUND + "\n");
+            return;
+        }
+        Product original = originalOpt.get();
 
         try {
             System.out.println(ProductConstants.MSG_UPDATE_INTRO);
@@ -138,13 +238,15 @@ public class ProductMenu {
             System.out.print(ProductConstants.PROMPT_NAME);
             String name = scanner.nextLine();
 
-            System.out.print(ProductConstants.PROMPT_DETAIL);
+            // 기존 등록된 카테고리에 맞는 동적 상세 필드 프롬프트 출력
+            String detailPrompt = getDetailPrompt(original.getCategory());
+            System.out.print(detailPrompt);
             String detail = scanner.nextLine();
 
             int numOf = readValidNumber(ProductConstants.PROMPT_NUM_OF, ProductConstants.MSG_INVALID_NUM_OF);
             int price = readValidNumber(ProductConstants.PROMPT_PRICE, ProductConstants.MSG_INVALID_PRICE);
 
-            ProductInputDto dto = new ProductInputDto(null, kind, name, detail, numOf, price);
+            ProductInputDto dto = new ProductInputDto(original.getCategory(), kind, name, detail, numOf, price);
             controller.updateProduct(id, dto);
             System.out.println(ProductConstants.MSG_UPDATE_SUCCESS + "\n");
         } catch (IllegalArgumentException e) {
@@ -169,3 +271,4 @@ public class ProductMenu {
         this.isRunning = false;
     }
 }
+

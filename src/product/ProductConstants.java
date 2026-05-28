@@ -25,11 +25,21 @@ public class ProductConstants {
 
     // 프롬프트
     public static final String PROMPT_MENU_CHOICE = "메뉴 번호 선택 : ";
-    public static final String PROMPT_REG_TYPE = "1. 일반 상품  2. 스낵  9. 이전으로 : ";
     public static final String PROMPT_ID = "상품 번호 입력 : ";
     public static final String PROMPT_KIND = "종류(과일/빵/가전 등) : ";
     public static final String PROMPT_NAME = "이름 : ";
-    public static final String PROMPT_DETAIL = "브랜드(GENERAL)/맛(SNACK) : ";
+    
+    // 동적 상세 필드 프롬프트
+    public static final String PROMPT_DETAIL_GENERAL = "브랜드 : ";
+    public static final String PROMPT_DETAIL_SNACK = "맛 : ";
+    public static final String PROMPT_DETAIL_FRUIT = "품종 : ";
+    
     public static final String PROMPT_NUM_OF = "개수 : ";
     public static final String PROMPT_PRICE = "가격 : ";
+
+    // 검색/조회용 프롬프트
+    public static final String PROMPT_SEARCH_CATEGORY = "조회할 카테고리 번호 입력 (1.일반, 2.스낵, 3.과일) : ";
+    public static final String PROMPT_SEARCH_BRAND = "검색할 브랜드/맛/품종(일부 또는 전체) : ";
+    public static final String PROMPT_SEARCH_PRICE = "검색할 기준 가격 이하(원) : ";
 }
+

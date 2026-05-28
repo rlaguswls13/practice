@@ -1,5 +1,6 @@
 package product.menu;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import product.ProductConstants;
 
@@ -10,6 +11,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Getter
+@AllArgsConstructor
 public enum MenuOption {
     CREATE(1, "상품/스낵 등록", ProductMenu::handleCreate),
     READ(2, "상품/스낵 전체 조회", ProductMenu::handleRead),
@@ -17,16 +20,9 @@ public enum MenuOption {
     DELETE(4, "상품/스낵 정보 삭제", ProductMenu::handleDelete),
     EXIT(9, "메인으로", ProductMenu::handleExit);
 
-    @Getter
     private final int code;
     private final String description;
     private final Consumer<ProductMenu> action;
-
-    MenuOption(int code, String description, Consumer<ProductMenu> action) {
-        this.code = code;
-        this.description = description;
-        this.action = action;
-    }
 
     public void execute(ProductMenu menu) {
         this.action.accept(menu);
@@ -42,6 +38,7 @@ public enum MenuOption {
     public static void displayMenu() {
         System.out.println(ProductConstants.MENU_HEADER);
         Arrays.stream(values())
-                .forEach(opt -> System.out.printf("%d. %s%n", opt.code, opt.description));
+                .forEach(opt -> System.out.printf("%d. %s%n", opt.getCode(), opt.getDescription()));
     }
 }
+

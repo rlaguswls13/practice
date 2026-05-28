@@ -1,3 +1,5 @@
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import product.menu.ProductMenu;
 import student.menu.StudentMenu;
 import shape.menu.ShapeMenu;
@@ -8,6 +10,8 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Getter
+@AllArgsConstructor
 public enum SystemOption {
     PRODUCT(1, "상품/스낵 관리 시스템", () -> {
         ProductMenu productMenu = new ProductMenu();
@@ -24,20 +28,6 @@ public enum SystemOption {
     private final String description;
     private final Runnable action;
 
-    SystemOption(int code, String description, Runnable action) {
-        this.code = code;
-        this.description = description;
-        this.action = action;
-    }
-
-    public int getCode() {
-        return code;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
     public void execute() {
         this.action.run();
     }
@@ -52,6 +42,7 @@ public enum SystemOption {
     public static void displayMenu() {
         System.out.println(SystemConstants.HEADER_SYSTEM);
         Arrays.stream(values())
-                .forEach(opt -> System.out.printf("%d. %s%n", opt.code, opt.description));
+                .forEach(opt -> System.out.printf("%d. %s%n", opt.getCode(), opt.getDescription()));
     }
 }
+
